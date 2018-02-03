@@ -43,7 +43,7 @@ ISR(latch_ISR_vect) {
 static inline uint8_t wait_clock(void) {
   static uint8_t c8;
   c8 = 0;
-  for (; (clk) && (c8 < 16); c8++) {
+  for (; (clk) && (c8 < 32); c8++) {
     _delay_us(0.5); // we delay by a short amount of time to avoid
     //   missing the edge of the clock cycle
     // the time could be shorter but, no need :)
@@ -51,7 +51,7 @@ static inline uint8_t wait_clock(void) {
   if (clk)
     return 1;
   c8 = 0;
-  for (; (!clk) && (c8 < 16); c8++) {
+  for (; (!clk) && (c8 < 32); c8++) {
     _delay_us(0.5);
   }
   if (!clk)
