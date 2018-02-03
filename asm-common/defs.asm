@@ -264,7 +264,8 @@ macro SNES_INIT(ROMSPEED) {
   clc // Clear Carry To Switch To Native Mode
   xce // Xchange Carry & Emulation Bit (Native Mode)
 
-  phk
+  pea $0000
+  plb
   plb
   rep #$38
 
