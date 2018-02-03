@@ -68,7 +68,7 @@
 // -------------------- DATA --------------------
 
 // Set to true when data is recieved, set to false when SNES requests data it and it is sent
-boolean newDataAvailable = false;
+volatile boolean newDataAvailable = false;
 uint8_t dataPacketBuffer[DATA_PACKET_SIZE_BYTES];
 
 /*
@@ -83,7 +83,7 @@ uint8_t dataPacketBuffer[DATA_PACKET_SIZE_BYTES];
 #define SERIAL_TIMEOUT 10
 
 // If this is commented, the recieved data is echoed back to the serial port
-#define ECHO_SERIAL_DATA
+//#define ECHO_SERIAL_DATA
 
 // -------------------- SETUP --------------------
 
