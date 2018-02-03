@@ -30,12 +30,12 @@ getData:
     sta.w REG_JOYA
     ldx.b #$00 // this has to go in between to take up time
     stz.w REG_JOYA
+    stz.b MEM_SUMBYTE
 -
     stz.b MEM_TMPBYTE
-    stz.b MEM_SUMBYTE
     ldy.b #$08
 -
-    lda.w REG_JOYB // change to load from cont. 2
+    lda.w REG_JOYB
     lsr
     lda.b MEM_TMPBYTE
     rol
@@ -52,10 +52,10 @@ getData:
 
     lda.b MEM_SUMBYTE
     bne invalidPacket
-    lda.b $10
-    bne invalidPacket
-    lda.b $11
-    bit.b #$f2
+    //lda.b $10
+    //bne invalidPacket
+    //lda.b $11
+    //bit.b #$f2
     bne invalidPacket
     cmp.b #$0c
     bcc invalidPacket

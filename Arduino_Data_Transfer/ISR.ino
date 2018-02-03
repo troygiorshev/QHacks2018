@@ -31,7 +31,7 @@ ISR(latch_ISR_vect) {
       tmp = buf[bytes];
     }
     if (wait_clock())
-      return;
+      break;
   }
 
   data_low;

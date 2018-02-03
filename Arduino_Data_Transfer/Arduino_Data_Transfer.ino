@@ -59,6 +59,10 @@
 #define data_low   (PORT(data_reg) &= ~PBV(data_reg,data_bit))
 #define data_high  (PORT(data_reg) |=  PBV(data_reg,data_bit))
 
+#define led_toggle (PORT(led_reg) ^=  PBV(led_reg,led_bit))
+#define led_high   (PORT(led_reg) |=  PBV(led_reg,led_bit))
+#define led_low    (PORT(led_reg) &= ~PBV(led_reg,led_bit))
+
 #define clk   (PIN(clk_reg) & PBV(clk_reg,clk_bit))
 #define latch (PIN(latch_reg) & PBV(latch_reg,latch_bit))
 
@@ -110,6 +114,7 @@ void setup() {
   // configure pins
   // hopefully this will be optimised into a few instructions
   DDR(data_reg)  |=  PBV(data_reg, data_bit);  // data out
+  DDR(led_reg)   |=  PBV(led_reg, led_bit);    // led out
   DDR(clk_reg)   &= ~PBV(clk_reg, clk_bit);    // clk in
   DDR(latch_reg) &= ~PBV(latch_reg, latch_bit); // latch in
 
@@ -148,8 +153,9 @@ void loop() {
   // -------------------- CHECK DATA--------------------
   
   if (dataIn == DATA_PACKET_SIZE_BYTES) {
+    led_high;
     newDataAvailable = true;
-    while(newDataAvailable) {} // loop
+    while(newDataAvailable) {} // loop so that we do not "drop" inputs
 
     // -------------------- ECHO--------------------
 
@@ -161,5 +167,8 @@ void loop() {
     }
     Serial.println("]");
 #endif
+  }
+  else {
+    led_low;
   }
 }
