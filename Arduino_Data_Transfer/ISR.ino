@@ -3,40 +3,19 @@
 ISR(latch_ISR_vect) {
   // do these have to be static? probably not
   static uint8_t bits, bytes, tmp;
+  uint8_t *buf;
 
   // this interrupt only triggers on the falling edge of latch
   //   so we don't have to check the latch pin or anything
 
   bits = 0;
   bytes = 0;
-
-  led_low;
-
-  // -------------------- SENT NEW DATA BIT --------------------
-  
-  // Set the "new data" bit if new data was read from PC before the SNES requested new data
-  dataPacketBuffer[1] = newDataAvailable ? B00001101 : B00001100;
-  //                                               ^           ^ 
-  //                                            New data    Old data 
-
-  // -------------------- CALCULATE CHECKSUM --------------------
-  
-  // Sum up data packet
-  int sum = 0;
-  dataPacketBuffer[CHECKSUM_BYTE] = 0; // Treat checksum as 0
-  for (byte i = 0; i < DATA_PACKET_SIZE_BYTES; i++) {
-    sum +=  dataPacketBuffer[i]; 
-  }
-  
-  // And with 0xFF
-  byte checkSum = 0x100 - (sum & 0xFF);
-  
-  dataPacketBuffer[CHECKSUM_BYTE] = checkSum;
   
   // -------------------- SEND DATA --------------------
+
+  buf = newDataAvailable ? dataPacketBuffer : cleanPacketBuffer;
   
-  newDataAvailable = false;
-  tmp = dataPacketBuffer[0];
+  tmp = buf[0];
   while (bytes < DATA_PACKET_SIZE_BYTES) { // this could be done faster in assembly
     //   but it's not necessary
     // push the bits out
@@ -49,13 +28,14 @@ ISR(latch_ISR_vect) {
     if (bits == 8) {
       bits = 0;
       bytes++;
-      tmp = dataPacketBuffer[bytes];
+      tmp = buf[bytes];
     }
     if (wait_clock())
       return;
   }
 
   data_low;
+  newDataAvailable = false;
 }
 
 // -------------------- WAIT CLOCK --------------------

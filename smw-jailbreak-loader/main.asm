@@ -92,7 +92,8 @@ getData:
     +
     inx
     cpx.b #$08
-    beq getData
+    bne -
+    bra getData
 
 invalidPacket:
     stz.w REG_CGWSEL

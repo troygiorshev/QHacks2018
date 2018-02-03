@@ -59,10 +59,6 @@
 #define data_low   (PORT(data_reg) &= ~PBV(data_reg,data_bit))
 #define data_high  (PORT(data_reg) |=  PBV(data_reg,data_bit))
 
-#define led_toggle (PORT(led_reg) ^=  PBV(led_reg,led_bit))
-#define led_high   (PORT(led_reg) |=  PBV(led_reg,led_bit))
-#define led_low    (PORT(led_reg) &= ~PBV(led_reg,led_bit))
-
 #define clk   (PIN(clk_reg) & PBV(clk_reg,clk_bit))
 #define latch (PIN(latch_reg) & PBV(latch_reg,latch_bit))
 
@@ -71,6 +67,7 @@
 // Set to true when data is recieved, set to false when SNES requests data it and it is sent
 volatile boolean newDataAvailable = false;
 uint8_t dataPacketBuffer[DATA_PACKET_SIZE_BYTES];
+uint8_t cleanPacketBuffer[DATA_PACKET_SIZE_BYTES];
 
 /*
   Controller data:
@@ -78,15 +75,28 @@ uint8_t dataPacketBuffer[DATA_PACKET_SIZE_BYTES];
   b = 1 for new data, 0 for old data
 */
 
+// Function that basically ensures the SNES won't crash
+void correctPacket(uint8_t *pkt){
+  uint16_t accum = 0;
+  pkt[0] = 0;
+  pkt[1] = 0b00001100 | (pkt[1] & 1);
+  accum += pkt[1];
+  pkt[2] = 0;
+  for(uint8_t i = 3; i < DATA_PACKET_SIZE_BYTES; i++)
+    accum += pkt[i];
+  pkt[2] = 0x100 - (accum & 0xff); // calculate checksum
+}
+
 // -------------------- SERIAL --------------------
 
-#define SERIAL_BAUD_RATE 115200
+#define SERIAL_BAUD_RATE 9600
 #define SERIAL_TIMEOUT 10
 
 // If this is commented, the recieved data is echoed back to the serial port
 //#define ECHO_SERIAL_DATA
 
 // -------------------- SETUP --------------------
+
 
 void setup() {
 
@@ -100,17 +110,17 @@ void setup() {
   // configure pins
   // hopefully this will be optimised into a few instructions
   DDR(data_reg)  |=  PBV(data_reg, data_bit);  // data out
-  DDR(led_reg)   |=  PBV(led_reg, led_bit);    // led out
   DDR(clk_reg)   &= ~PBV(clk_reg, clk_bit);    // clk in
   DDR(latch_reg) &= ~PBV(latch_reg, latch_bit); // latch in
-
-  led_low;
 
   // -------------------- INIT DATA BUFFERS --------------------
 
   for (byte i = 0; i < DATA_PACKET_SIZE_BYTES; i++) {
     dataPacketBuffer[i] = 0;
+    cleanPacketBuffer[i] = 0;
   }
+  correctPacket(dataPacketBuffer);
+  correctPacket(cleanPacketBuffer);
 
   // Wait an extra second for the PC's operating system to load drivers
   // and do whatever it does to actually be ready for input
@@ -137,8 +147,9 @@ void loop() {
 
   // -------------------- CHECK DATA--------------------
   
-  if (dataIn > 0) {
+  if (dataIn == DATA_PACKET_SIZE_BYTES) {
     newDataAvailable = true;
+    while(newDataAvailable) {} // loop
 
     // -------------------- ECHO--------------------
 
@@ -150,11 +161,5 @@ void loop() {
     }
     Serial.println("]");
 #endif
-
-    led_high;
-
-  } else {
-    led_low;
   }
-
 }
