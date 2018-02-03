@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 
 import sys
-
+import serial
+serial = serial.Serial()
+serial.close()
+    
 def WrapCommand(cmd, data):
     ret = bytearray(12)
     ret[1] = 0b00001101
@@ -31,16 +34,27 @@ def UploadAndExecute(data):
     return cmds
 
 def Main(args):
-    if len(args) != 3:
-        print("script input output")
+    global port
+    if len(args) != 4:
+        print("Invalid input arguments")
         return 1
+    
     f = open(args[1],"rb")
     fout = open(args[2],"wb")
     cmds = UploadAndExecute(f.read())
+
+    serial.port = args[3]
+    serial.baudrate = 115200
+    serial.open()
+    
+    print("Starting upload on " + args[3] + "...")
     for cmd in cmds:
         fout.write(cmd)
+        serial.write(cmd)
     f.close()
     fout.close()
+    serial.close()
+    print("Done!")
 
 if __name__ == "__main__":
     sys.exit(Main(sys.argv))
