@@ -40,6 +40,7 @@
 // -------------------- CONSTANTS / MACROS --------------------
 
 #define DATA_PACKET_SIZE_BYTES  12
+#define CHECKSUM_BYTE 2
 
 // Useful defines
 #ifndef _BV
@@ -107,7 +108,7 @@ void setup() {
 
   // -------------------- INIT DATA BUFFERS --------------------
 
-  for (int8_t i = 0; i < DATA_PACKET_SIZE_BYTES; i++) {
+  for (byte i = 0; i < DATA_PACKET_SIZE_BYTES; i++) {
     dataPacketBuffer[i] = 0;
   }
 
@@ -130,21 +131,28 @@ void setup() {
 
 void loop() {
 
-  int8_t dataIn = Serial.readBytes(dataPacketBuffer, DATA_PACKET_SIZE_BYTES);
+  // -------------------- READ DATA--------------------
+    
+  byte dataIn = Serial.readBytes(dataPacketBuffer, DATA_PACKET_SIZE_BYTES);
+
+  // -------------------- CHECK DATA--------------------
   
   if (dataIn > 0) {
     newDataAvailable = true;
-  
+
+    // -------------------- ECHO--------------------
+
 #ifdef ECHO_SERIAL_DATA
     Serial.print("[");
     for (byte i = 0; i < DATA_PACKET_SIZE_BYTES; i++) {
-      Serial.write(dataPacketBuffer[i]);
+      Serial.print(dataPacketBuffer[i], BIN);
+      Serial.print(" ");
     }
     Serial.println("]");
 #endif
 
     led_high;
-    
+
   } else {
     led_low;
   }

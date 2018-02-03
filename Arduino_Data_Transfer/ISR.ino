@@ -12,10 +12,28 @@ ISR(latch_ISR_vect) {
 
   led_low;
 
+  // -------------------- SENT NEW DATA BIT --------------------
+  
   // Set the "new data" bit if new data was read from PC before the SNES requested new data
   dataPacketBuffer[1] = newDataAvailable ? B00001101 : B00001100;
   //                                               ^           ^ 
   //                                            New data    Old data 
+
+  // -------------------- CALCULATE CHECKSUM --------------------
+  
+  // Sum up data packet
+  int sum = 0;
+  dataPacketBuffer[CHECKSUM_BYTE] = 0; // Treat checksum as 0
+  for (byte i = 0; i < DATA_PACKET_SIZE_BYTES; i++) {
+    sum +=  dataPacketBuffer[i]; 
+  }
+  
+  // And with 0xFF
+  byte checkSum = 0x100 - (sum & 0xFF);
+  
+  dataPacketBuffer[CHECKSUM_BYTE] = checkSum;
+  
+  // -------------------- SEND DATA --------------------
   
   newDataAvailable = false;
   tmp = dataPacketBuffer[0];
