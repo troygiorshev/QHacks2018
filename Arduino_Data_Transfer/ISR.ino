@@ -1,41 +1,95 @@
 // -------------------- MAIN LATCH INTERRUPT --------------------
 
-ISR(latch_ISR_vect) {
-  // do these have to be static? probably not
-  static uint8_t bits, bytes, tmp;
-  uint8_t *buf;
-
-  // this interrupt only triggers on the falling edge of latch
-  //   so we don't have to check the latch pin or anything
-
-  bits = 0;
-  bytes = 0;
-  
-  // -------------------- SEND DATA --------------------
-
-  buf = newDataAvailable ? dataPacketBuffer : cleanPacketBuffer;
-  
-  tmp = buf[0];
-  while (bytes < DATA_PACKET_SIZE_BYTES) { // this could be done faster in assembly
-    //   but it's not necessary
-    // push the bits out
-    if (tmp & 0x80)
-      data_low;
-    else
-      data_high;
-    tmp <<= 1;
-    bits++;
-    if (bits == 8) {
-      bits = 0;
-      bytes++;
-      tmp = buf[bytes];
+void int_clock(void) {
+  if(clocks<20)
+    data_low;
+  else
+    data_high;
+  /*
+  if(clk_bytes < DATA_PACKET_SIZE_BYTES){
+    clk_tmp <<= 1;
+    clk_bits++;
+    if(clk_bits == 8) {
+      clk_bits = 0;
+      clk_bytes++;
+      clk_tmp = clk_buf[clk_bytes];
     }
-    if (wait_clock())
-      break;
+    cur_clk_data = clk_tmp & 0x80;
+  }
+  else
+    cur_clk_data = 0;
+    */
+  clocks++;
+}
+
+void int_latch(void) {
+  /*
+  clk_bits = 0;
+  clk_bytes = 0;
+  if(newDataAvailable){
+    clk_tmp = dataPacketBuffer[0];
+    clk_buf = dataPacketBuffer;
+  }
+  else {
+    clk_tmp = cleanPacketBuffer[0];
+    clk_buf = cleanPacketBuffer;
+  }
+  cur_clk_data = clk_tmp & 0x80;
+  */
+  clocks = 0;
+  //clk_lo = 0, clk_hi = 0;
+  //newDataAvailable=false;
+  return;
+  /*
+  if(newDataAvailable){
+    tmp = dataPacketBuffer[0];
+    while (bytes < DATA_PACKET_SIZE_BYTES) { // this could be done faster in assembly
+      //   but it's not necessary
+      // push the bits out
+      if (tmp & 0x80)
+        data_low;
+      else
+        data_high;
+      tmp <<= 1;
+      bits++;
+      if (bits == 8) {
+        bits = 0;
+        bytes++;
+        tmp = dataPacketBuffer[bytes];
+      }
+      bit_count++;
+      if (wait_clock()){
+        bit_count--;
+        break;
+      }
+    }
+  } else {
+    tmp = cleanPacketBuffer[0];
+    while (bytes < DATA_PACKET_SIZE_BYTES) { // this could be done faster in assembly
+      //   but it's not necessary
+      // push the bits out
+      if (tmp & 0x80)
+        data_low;
+      else
+        data_high;
+      tmp <<= 1;
+      bits++;
+      if (bits == 8) {
+        bits = 0;
+        bytes++;
+        tmp = cleanPacketBuffer[bytes];
+      }
+      bit_count++;
+      if (wait_clock()){
+        bit_count--;
+        break;
+      }
+    }
   }
 
   data_low;
   newDataAvailable = false;
+  */
 }
 
 // -------------------- WAIT CLOCK --------------------
@@ -43,7 +97,7 @@ ISR(latch_ISR_vect) {
 static inline uint8_t wait_clock(void) {
   static uint8_t c8;
   c8 = 0;
-  for (; (clk) && (c8 < 32); c8++) {
+  for (; (clk) && (c8 < 250); c8++) {
     _delay_us(0.5); // we delay by a short amount of time to avoid
     //   missing the edge of the clock cycle
     // the time could be shorter but, no need :)
@@ -51,7 +105,7 @@ static inline uint8_t wait_clock(void) {
   if (clk)
     return 1;
   c8 = 0;
-  for (; (!clk) && (c8 < 32); c8++) {
+  for (; (!clk) && (c8 < 250); c8++) {
     _delay_us(0.5);
   }
   if (!clk)

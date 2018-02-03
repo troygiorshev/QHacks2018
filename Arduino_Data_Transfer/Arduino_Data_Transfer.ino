@@ -70,8 +70,12 @@
 
 // Set to true when data is recieved, set to false when SNES requests data it and it is sent
 volatile boolean newDataAvailable = false;
-uint8_t dataPacketBuffer[DATA_PACKET_SIZE_BYTES];
-uint8_t cleanPacketBuffer[DATA_PACKET_SIZE_BYTES];
+volatile uint8_t dataPacketBuffer[DATA_PACKET_SIZE_BYTES];
+volatile uint8_t cleanPacketBuffer[DATA_PACKET_SIZE_BYTES];
+
+volatile uint8_t clocks, clocks_latch;
+volatile uint8_t cur_clk_data, clk_bytes, clk_bits, clk_tmp, clk_hi, clk_lo;
+volatile uint8_t *clk_buf;
 
 /*
   Controller data:
@@ -80,7 +84,7 @@ uint8_t cleanPacketBuffer[DATA_PACKET_SIZE_BYTES];
 */
 
 // Function that basically ensures the SNES won't crash
-void correctPacket(uint8_t *pkt){
+void correctPacket(volatile uint8_t *pkt){
   uint16_t accum = 0;
   pkt[0] = 0;
   pkt[1] = 0b00001100 | (pkt[1] & 1);
@@ -93,7 +97,7 @@ void correctPacket(uint8_t *pkt){
 
 // -------------------- SERIAL --------------------
 
-#define SERIAL_BAUD_RATE 9600
+#define SERIAL_BAUD_RATE 115200
 #define SERIAL_TIMEOUT 10
 
 // If this is commented, the recieved data is echoed back to the serial port
@@ -130,15 +134,13 @@ void setup() {
   // Wait an extra second for the PC's operating system to load drivers
   // and do whatever it does to actually be ready for input
   // I don't think we have to wait for 1 second (maybe on windows?)
-  _delay_ms(1000);
 
   // -------------------- ATTACH INTERRUPT --------------------
 
-  cli();
-  EIFR  = 0xff;            // clear interrupt flags (for good luck)
-  EICRA = latch_EICRA_val; // interrupt on falling edge of INT0
-  EIMSK = latch_EIMSK_val; // enable only INT0 (D0 on ATmega32u4)
-  sei();
+  noInterrupts();
+  attachInterrupt(digitalPinToInterrupt(2), int_latch, FALLING);
+  attachInterrupt(digitalPinToInterrupt(3), int_clock, RISING);
+  interrupts();
 
 }
 
@@ -147,15 +149,30 @@ void setup() {
 void loop() {
 
   // -------------------- READ DATA--------------------
-    
-  byte dataIn = Serial.readBytes(dataPacketBuffer, DATA_PACKET_SIZE_BYTES);
+
+
+  
+  while(1){} /// AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+
+  
+  while(newDataAvailable){} // ensure we don't write to the buffer while the interrupt could access it
+    led_high;
+  while(Serial.available() < 12) {} // wait for buffer to be full
+    led_low;
+  byte dataIn = Serial.readBytes((uint8_t *)dataPacketBuffer, DATA_PACKET_SIZE_BYTES);
 
   // -------------------- CHECK DATA--------------------
   
   if (dataIn == DATA_PACKET_SIZE_BYTES) {
-    led_high;
     newDataAvailable = true;
-    while(newDataAvailable) {} // loop so that we do not "drop" inputs
+    Serial.write((uint8_t *)dataPacketBuffer, DATA_PACKET_SIZE_BYTES);
+    //while(newDataAvailable) {}
+    while(clocks < 96) {} // loop so that we do not "drop" inputs
+    clocks = 0;
+    data_low;
+    newDataAvailable = false;
+    
 
     // -------------------- ECHO--------------------
 
@@ -167,8 +184,5 @@ void loop() {
     }
     Serial.println("]");
 #endif
-  }
-  else {
-    led_low;
   }
 }

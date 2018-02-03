@@ -26,10 +26,10 @@ def Groups(data, l):
 
 def UploadAndExecute(data):
     cmds = []
-    cmds.append(WrapCommand(0x11, bytes({0x00, 0x20, 0x7e})))
+    cmds.append(WrapCommand(0x11, bytes({0x00, 0xa0, 0x7f})))
     for g in Groups(data, 8):
         cmds.append(WrapCommand(0x12,g))
-    cmds.append(WrapCommand(0x11, bytes({0x00, 0x20, 0x7e})))
+    cmds.append(WrapCommand(0x11, bytes({0x00, 0xa0, 0x7f})))
     cmds.append(WrapCommand(0x10, bytes(0)))
     return cmds
 
@@ -42,16 +42,36 @@ def Main(args):
     f = open(args[1],"rb")
     fout = open(args[2],"wb")
     cmds = UploadAndExecute(f.read())
+    f.close()
 
     serial.port = args[3]
     serial.baudrate = 115200
+    serial.timeout = 2
     serial.open()
+
+    input("Press enter to send data.")
     
+    nCmdsGood = 0
+
     print("Starting upload on " + args[3] + "...")
     for cmd in cmds:
         fout.write(cmd)
         serial.write(cmd)
-    f.close()
+        resp = serial.read(12)
+        if len(resp) > 0:
+            if resp == cmd:
+                nCmdsGood += 1
+            print(resp)
+        else:
+            print("Waited too long.")
+            break
+
+    if nCmdsGood == len(cmds):
+        print("All commands transferred 'successfully'.")
+    else:
+        print("Error! # of commands: {0}   # of successes: {1}".format(len(cmds),nCmdsGood))
+    input("Press enter to close serial port.")
+
     fout.close()
     serial.close()
     print("Done!")
