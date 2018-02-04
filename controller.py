@@ -53,19 +53,25 @@ def Main(args):
                     if(buf < -0.55):
                         left = 1
                         right = 0
-                    elif(buf < -0.30):
+                    elif(buf < -0.35):
                         left = 1 if (framecount % 3 != 0) else 0
                         right = 0
-                    elif(buf < -0.10):
+                    elif(buf < -0.20):
+                        left = 1 if ((framecount % 5) % 2 == 0) else 0
+                        right = 0
+                    elif(buf < -0.08):
                         left = 1 if (framecount % 2 == 0) else 0
                         right = 0
                     elif(buf > 0.55):
                         right = 1
                         left = 0
-                    elif(buf > 0.30):
+                    elif(buf > 0.35):
                         right = 1 if (framecount % 3 != 0) else 0
                         left = 0
-                    elif(buf > 0.10):
+                    elif(buf > 0.20):
+                        right = 1 if ((framecount % 5) % 2 == 0) else 0
+                        left = 0
+                    elif(buf > 0.08):
                         right = 1 if (framecount % 2 == 0) else 0
                         left = 0
                     #</crapcode>
