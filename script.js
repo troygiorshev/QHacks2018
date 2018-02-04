@@ -1,5 +1,18 @@
 var noble = require('noble');
 var Quaternion = require('quaternion');
+var PythonShell = require('python-shell')
+
+//First and foremost, start up the python script
+var options = {
+    mode: 'text',
+    pythonPath: 'python3'
+}
+var pyshell = new PythonShell('pythonPart.py',options);
+
+//constants
+
+const SCREENWIDTH = 20 //Screen width in cm
+const SCREENHEIGHT = 15 //Screen height in cm
 
 noble.on('stateChange', function(state) {
   if (state === 'poweredOn') {
@@ -40,6 +53,7 @@ function handleData(dataOLD) {
     dataMID = toArrayBuffer(dataOLD);
     data = new DataView(dataMID);
 
+    //Credit to: mrdoob/daydream-controller.js
 
     state.isClickDown = (data.getUint8(18) & 0x1) > 0;
 	state.isAppDown = (data.getUint8(18) & 0x4) > 0;
@@ -151,21 +165,40 @@ function handleData(dataOLD) {
     if(state.isVolPlusDown)
         volPlusWaiting = true
     if(volPlusWaiting && !state.isVolPlusDown){
-        if(distance > 11)
-            distance = distance - 10
+        distance = distance + 10
         volPlusWaiting = false
     }
     if(state.isVolMinusDown)
         volMinusWaiting = true
     if(volMinusWaiting && !state.isVolMinusDown){
-        distance = distance + 10
+        if(distance > 11)
+            distance = distance - 10
         volMinusWaiting = false
     }
 
-    console.log('--------------------');
-    console.log('x: ' + x);
-    console.log('y: ' + y);
+    //Awesome!
+    //Now let's account for it being off screen.
+    //Ternary operators aren't that cool...
+    if(x > SCREENWIDTH/2)
+        x = SCREENWIDTH/2
+    else if (x < -SCREENWIDTH/2)
+        x = -SCREENWIDTH/2
+    if(y > SCREENHEIGHT/2)
+        y = SCREENHEIGHT/2
+    else if(y < -SCREENHEIGHT/2)
+        y= -SCREENHEIGHT/2
 
+    //Okay, awesome, time to throw the data out to the arduino!  Maybe time to make a new function...
+    outputCoords(x,y,state.isAppDown, state.isClickDown)
+
+}
+
+function outputCoords(x,y, app, click){
+    pyshell.send('START')
+    pyshell.send(x)
+    pyshell.send(y)
+    pyshell.send(app)
+    pyshell.send(click)
 }
 
 function toArrayBuffer(buf) {
@@ -176,3 +209,7 @@ function toArrayBuffer(buf) {
     }
     return ab;
 }
+
+pyshell.on('message', function(message) {
+    console.log(message)
+});
