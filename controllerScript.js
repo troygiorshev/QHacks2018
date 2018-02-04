@@ -2,6 +2,8 @@ var noble = require('noble');
 var Quaternion = require('quaternion');
 var PythonShell = require('python-shell')
 
+"use strict";
+
 //First and foremost, start up the python script
 var options = {
     mode: 'text',
