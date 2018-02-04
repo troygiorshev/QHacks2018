@@ -48,10 +48,10 @@ def Main(args):
                         buf = 0
                     else:
                         buf = float(buff)
-                    if(buf < -0.3):
+                    if(buf < -0.1):
                         left = 1
                         right = 0
-                    elif(buf > 0.3):
+                    elif(buf > 0.1):
                         right = 1
                         left = 0
                     #</crapcode>
