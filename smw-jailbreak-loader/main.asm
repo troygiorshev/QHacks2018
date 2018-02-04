@@ -25,6 +25,7 @@ seek($ffff50)
     sta.w REG_INIDISP
     stz.w REG_NMITIMEN
 getData:
+//invalidPacket:
     jsr waitForNMI
 -
     lda.b #$01
@@ -99,7 +100,7 @@ afterLoadByte:
     bne -
     bra getData
 
-
+ // latch is 12 us
 invalidPacket:
 greyScreen:
     // copy the packet for debugging purposes

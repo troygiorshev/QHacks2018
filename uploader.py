@@ -46,7 +46,7 @@ def Main(args):
 
     serial.port = args[3]
     serial.baudrate = 115200
-    serial.timeout = 2
+    serial.timeout = 10
     serial.open()
 
     input("Press enter to send data.")

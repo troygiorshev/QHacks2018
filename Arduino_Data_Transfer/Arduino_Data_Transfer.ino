@@ -30,12 +30,18 @@
 #define latch_reg D
 #define latch_bit 2
 
+// latch: int0
+// clock: int1
+
 // These defines have to be adjusted according to the data sheet
 //   if you change the latch pin. Must be falling edge.
 // http://www.atmel.com/images/Atmel-8271-8-bit-AVR-Microcontroller-ATmega48A-48PA-88A-88PA-168A-168PA-328-328P_datasheet_Complete.pdf
-#define latch_EICRA_val 0x02
+#define latch_EICRA_val 0x03
 #define latch_EIMSK_val _BV(INT0)
 #define latch_ISR_vect  INT0_vect
+
+#define clock_EIMSK_val _BV(INT1)
+#define clock_ISR_vect  INT1_vect
 
 // -------------------- CONSTANTS / MACROS --------------------
 
@@ -137,11 +143,13 @@ void setup() {
 
   // -------------------- ATTACH INTERRUPT --------------------
 
+
   noInterrupts();
-  attachInterrupt(digitalPinToInterrupt(2), int_latch, FALLING);
+  attachInterrupt(digitalPinToInterrupt(2), int_latch, RISING);
   attachInterrupt(digitalPinToInterrupt(3), int_clock, RISING);
   interrupts();
 
+  led_low;
 }
 
 // -------------------- LOOP --------------------
@@ -149,40 +157,17 @@ void setup() {
 void loop() {
 
   // -------------------- READ DATA--------------------
-
-
   
-  while(1){} /// AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-
-
-  
-  while(newDataAvailable){} // ensure we don't write to the buffer while the interrupt could access it
-    led_high;
-  while(Serial.available() < 12) {} // wait for buffer to be full
-    led_low;
+  //while(Serial.available() < 12) {} // wait for buffer to be full
   byte dataIn = Serial.readBytes((uint8_t *)dataPacketBuffer, DATA_PACKET_SIZE_BYTES);
 
   // -------------------- CHECK DATA--------------------
-  
   if (dataIn == DATA_PACKET_SIZE_BYTES) {
-    newDataAvailable = true;
     Serial.write((uint8_t *)dataPacketBuffer, DATA_PACKET_SIZE_BYTES);
-    //while(newDataAvailable) {}
+    newDataAvailable = true;
     while(clocks < 96) {} // loop so that we do not "drop" inputs
-    clocks = 0;
-    data_low;
     newDataAvailable = false;
-    
-
-    // -------------------- ECHO--------------------
-
-#ifdef ECHO_SERIAL_DATA
-    Serial.print("[");
-    for (byte i = 0; i < DATA_PACKET_SIZE_BYTES; i++) {
-      Serial.print(dataPacketBuffer[i], BIN);
-      Serial.print(" ");
-    }
-    Serial.println("]");
-#endif
+    clocks = 0;
+    data_high;
   }
 }

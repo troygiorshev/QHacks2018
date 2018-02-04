@@ -1,11 +1,10 @@
 // -------------------- MAIN LATCH INTERRUPT --------------------
 
 void int_clock(void) {
-  if(clocks<20)
+  if(cur_clk_data)
     data_low;
   else
     data_high;
-  /*
   if(clk_bytes < DATA_PACKET_SIZE_BYTES){
     clk_tmp <<= 1;
     clk_bits++;
@@ -18,25 +17,27 @@ void int_clock(void) {
   }
   else
     cur_clk_data = 0;
-    */
   clocks++;
 }
 
 void int_latch(void) {
-  /*
+  
   clk_bits = 0;
   clk_bytes = 0;
   if(newDataAvailable){
     clk_tmp = dataPacketBuffer[0];
     clk_buf = dataPacketBuffer;
+    led_low;
   }
   else {
     clk_tmp = cleanPacketBuffer[0];
     clk_buf = cleanPacketBuffer;
+    led_high;
   }
   cur_clk_data = clk_tmp & 0x80;
-  */
+  
   clocks = 0;
+  int_clock();
   //clk_lo = 0, clk_hi = 0;
   //newDataAvailable=false;
   return;
