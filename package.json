@@ -1,0 +1,30 @@
+{
+  "name": "qhacks2018",
+  "version": "0.0.1",
+  "description": "Uh, um, we have some things made?",
+  "main": "controllerScript.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/troygiorshev/QHacks2018.git"
+  },
+  "keywords": [
+    "snes",
+    "python",
+    "arduino",
+    "daydream"
+  ],
+  "author": "Cooper Harasyn, vacer25, Troy Giorshev",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/troygiorshev/QHacks2018/issues"
+  },
+  "homepage": "https://github.com/troygiorshev/QHacks2018#readme",
+  "dependencies": {
+    "noble": "^1.9.0",
+    "python-shell": "^0.4.0",
+    "quaternion": "^2.0.0"
+  }
+}
