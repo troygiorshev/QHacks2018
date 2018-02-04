@@ -1,4 +1,5 @@
 var noble = require('noble');
+var Quaternion = require('quaternion');
 
 noble.on('stateChange', function(state) {
   if (state === 'poweredOn') {
@@ -8,7 +9,11 @@ noble.on('stateChange', function(state) {
   }
 });
 
-var state = {};
+//Some initialization
+let state = {};
+distance = 80 //distance from screen in cm.
+state.yOff = 0; state.pOff = 0
+let volPlusWaiting, volMinusWaiting
 
 noble.on('discover', function(peripheral) {
     //console.log(peripheral.advertisement.localName);
@@ -34,6 +39,7 @@ function handleData(dataOLD) {
 
     dataMID = toArrayBuffer(dataOLD);
     data = new DataView(dataMID);
+
 
     state.isClickDown = (data.getUint8(18) & 0x1) > 0;
 	state.isAppDown = (data.getUint8(18) & 0x4) > 0;
@@ -84,10 +90,82 @@ function handleData(dataOLD) {
 	state.xTouch = ((data.getUint8(16) & 0x1F) << 3 | (data.getUint8(17) & 0xE0) >> 5) / 255.0;
 	state.yTouch = ((data.getUint8(17) & 0x1F) << 3 | (data.getUint8(18) & 0xE0) >> 5) / 255.0;
 
-    if(state.isHomeDown)
-        console.log('down');
-    else
-        console.log('up');
+    //</credit>
+
+    //This orientation data starts with Axis-Angle orientation, where the magnitude of the vector represents the angle.
+
+    state.angle = Math.sqrt(state.xOri*state.xOri + state.yOri*state.yOri + state.zOri*state.zOri);
+
+    state.xA = state.xOri / state.angle;
+    state.yA = state.yOri / state.angle;
+    state.zA = state.zOri / state.angle;
+
+    //Now we're in true Axis-Angle orientation form.
+    //What we're looking for is to convert to Euler angles: yaw, pitch, roll
+    //In that order, and then we'll just drop the roll, because we don't care!
+    //Converting to quaternions first seems like the typical way.
+
+    state.q = Quaternion.fromAxisAngle([state.xA, state.yA, state.zA], state.angle);
+
+    //Woot, we have a quaternion!
+
+    //Solve the gimbal lock pole issue
+    t = state.q.y * state.q.x + state.q.z * state.q.w;
+    t = t > 0.499 ? 1 : (t < -0.499 ? -1 : 0);
+    //Ternary operators are cool
+
+    state.Yaw = t == 0 ? Math.atan2(2*(state.q.y * state.q.w + state.q.x * state.q.z), 1-2*(state.q.y*state.q.y + state.q.x*state.q.x)) : 0
+
+    state.Pitch = t == 0 ? Math.asin(2*(state.q.w * state.q.x - state.q.z * state.q.y) <= -1 ? -1 : 2*(state.q.w * state.q.x - state.q.z * state.q.y) >= 1 ? 1 : 2*(state.q.w * state.q.x - state.q.z * state.q.y)) : t *  Math.PI * 0.5;
+
+    //Woot, we have Pitch and Yaw!
+    //Sort of.  The Yaw works perfectly, ranging between -3.14 to +3.14, with 0 being forward.  The Pitch is interesting.  It ranges from 1.57 to -1.57, with 0 being flat, and 1.57 being directly upwards.  Then, once you continue a "backflip", the values decrease from 1.57 back down to zero.  But, whatever, that's good enough!
+
+    //Time to correct the values for forward.
+
+    //Get wrong orientations
+    if(state.isHomeDown){
+        state.yOff = state.Yaw;
+        state.pOff = state.Pitch;
+    }
+
+    //Correct Orientation
+    state.Yaw = state.Yaw - state.yOff
+    state.Pitch = state.Pitch - state.pOff
+
+    if(state.Yaw < -3.14)
+        state.Yaw += 6.28
+    else if(state.Yaw > 3.14)
+        state.Yaw -= 6.28
+
+    //The yaw is flipped, I don't like it
+    state.Yaw = -state.Yaw
+
+    //Okay, so there's a right way to correc the pitch that accounts for the edge cases.  But it doesn't matter in our case, because our pitch offsets will never be that much, so, uh, no fix required.
+
+    //Okay, now time to transmit these Pitch and Yaw angles to distances on the screen.
+    x = distance * Math.tan(state.Yaw)
+    y = distance * Math.tan(state.Pitch)
+
+    //"Sensitivity
+    if(state.isVolPlusDown)
+        volPlusWaiting = true
+    if(volPlusWaiting && !state.isVolPlusDown){
+        if(distance > 11)
+            distance = distance - 10
+        volPlusWaiting = false
+    }
+    if(state.isVolMinusDown)
+        volMinusWaiting = true
+    if(volMinusWaiting && !state.isVolMinusDown){
+        distance = distance + 10
+        volMinusWaiting = false
+    }
+
+    console.log('--------------------');
+    console.log('x: ' + x);
+    console.log('y: ' + y);
+
 }
 
 function toArrayBuffer(buf) {
