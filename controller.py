@@ -50,19 +50,19 @@ def Main(args):
                         buf = 0
                     else:
                         buf = float(buff)
-                    if(buf < -0.35):
+                    if(buf < -0.55):
                         left = 1
                         right = 0
-                    elif(buf < -0.20):
+                    elif(buf < -0.30):
                         left = 1 if (framecount % 3 != 0) else 0
                         right = 0
                     elif(buf < -0.10):
                         left = 1 if (framecount % 2 == 0) else 0
                         right = 0
-                    elif(buf > 0.35):
+                    elif(buf > 0.55):
                         right = 1
                         left = 0
-                    elif(buf > 0.20):
+                    elif(buf > 0.30):
                         right = 1 if (framecount % 3 != 0) else 0
                         left = 0
                     elif(buf > 0.10):
