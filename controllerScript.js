@@ -27,7 +27,7 @@ noble.on('stateChange', function(state) {
 let state = {};
 distance = 80 //distance from screen in cm.
 state.yOff = 0; state.pOff = 0
-state.mode = 1
+state.mode = 2
 state.wasVolPlusDown
 let volPlusWaiting, volMinusWaiting
 lastTime = 0;
@@ -155,7 +155,6 @@ function handleData(dataOLD) {
 
     //Correct Orientation
     state.Pitch = state.Pitch - state.pOff
-
     if(currentTime - lastTime > 20){
         pyshell.send('START')
         pyshell.send(state.mode)

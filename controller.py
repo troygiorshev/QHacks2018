@@ -10,7 +10,6 @@ def bitstring_to_bytes(s):
 def Main(args):
     try:
         buff = ''
-        sys.stderr.write("{0}\n".format(args))
         if len(args) != 2:
             return 1
 
@@ -19,10 +18,13 @@ def Main(args):
         serial.timeout = 10
         serial.open()
 
+        framecount = 0
+
         while True:
             buff = input()
             if(buff == 'START'):
                 #Set everything to zero to start
+                framecount += 1
                 b = 0
                 y = 0
                 select = 0
@@ -48,11 +50,17 @@ def Main(args):
                         buf = 0
                     else:
                         buf = float(buff)
-                    if(buf < -0.1):
+                    if(buf < -0.25):
                         left = 1
                         right = 0
-                    elif(buf > 0.1):
+                    elif(buf < -0.15):
+                        left = 1 if (framecount % 2 == 0) else 0
+                        right = 0
+                    elif(buf > 0.25):
                         right = 1
+                        left = 0
+                    elif(buf > 0.15):
+                        right = 1 if (framecount % 2 == 0) else 0
                         left = 0
                     #</crapcode>
                     buff = input()
