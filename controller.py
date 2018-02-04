@@ -119,9 +119,4 @@ except KeyboardInterrupt:
     serial.close()
     pass
 
-
-#def transmit(data):
-
-
-
 print("DONE")
