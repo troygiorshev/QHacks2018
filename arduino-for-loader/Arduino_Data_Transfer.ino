@@ -45,7 +45,7 @@
 
 // -------------------- CONSTANTS / MACROS --------------------
 
-#define DATA_PACKET_SIZE_BYTES  2
+#define DATA_PACKET_SIZE_BYTES  18
 
 // Useful defines
 #ifndef _BV
@@ -75,15 +75,10 @@
 
 // Set to true when data is recieved, set to false when SNES requests data it and it is sent
 volatile boolean newDataAvailable = false;
+volatile uint8_t dataPacketBuffer[DATA_PACKET_SIZE_BYTES];
 
-// when buf_active: PC -> buf_a, buf_b -> SNES
-// else:            PC -> buf_b, buf_a -> SNES
-volatile uint8_t buf_a[DATA_PACKET_SIZE_BYTES];
-volatile uint8_t buf_b[DATA_PACKET_SIZE_BYTES];
-
-volatile uint8_t clocks;
-volatile uint8_t buf_active;
-volatile uint8_t cur_clk_data, clk_bytes, clk_bits, clk_tmp;
+volatile uint8_t clocks, clocks_latch;
+volatile uint8_t cur_clk_data, clk_bytes, clk_bits, clk_tmp, clk_hi, clk_lo;
 volatile uint8_t *clk_buf;
 
 /*
@@ -122,10 +117,8 @@ void setup() {
   // -------------------- INIT DATA BUFFERS --------------------
 
   for (byte i = 0; i < DATA_PACKET_SIZE_BYTES; i++) {
-    buf_a[i] = 0;
-    buf_b[i] = 0;
+    dataPacketBuffer[i] = 0;
   }
-  buf_active = 0;
 
   // -------------------- ATTACH INTERRUPT --------------------
 
@@ -142,13 +135,16 @@ void setup() {
 
 void loop() {
   // -------------------- READ DATA--------------------
-  byte dataIn = Serial.readBytes((uint8_t *)(buf_active ? buf_a : buf_b), DATA_PACKET_SIZE_BYTES);
+  
+  //while(Serial.available() < 12) {} // wait for buffer to be full
+  byte dataIn = Serial.readBytes((uint8_t *)dataPacketBuffer, DATA_PACKET_SIZE_BYTES);
 
   // -------------------- CHECK DATA--------------------
   if (dataIn == DATA_PACKET_SIZE_BYTES) {
-    Serial.write((uint8_t *)(buf_active ? buf_a : buf_b), DATA_PACKET_SIZE_BYTES);
+    Serial.write((uint8_t *)dataPacketBuffer, DATA_PACKET_SIZE_BYTES);
+    newDataAvailable = true;
     while(clocks < (8 * DATA_PACKET_SIZE_BYTES)) {} // loop so that we do not "drop" inputs
-    buf_active = !buf_active;
+    newDataAvailable = false;
     clocks = 0;
   }
 }

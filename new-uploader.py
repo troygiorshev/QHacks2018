@@ -6,15 +6,10 @@ serial = serial.Serial()
 serial.close()
     
 def WrapCommand(cmd, data):
-    ret = bytearray(12)
-    ret[1] = 0b00001101
-    ret[3] = cmd
+    ret = bytearray(18)
+    ret[1] = cmd & 0x3
     for i in range(len(data)):
-        ret[i+4] = data[i]
-    accum = 0
-    for v in ret:
-        accum += v
-    ret[2] = 0x100 - (accum & 0xff)
+        ret[i+2] = data[i]
     return ret
 
 def Groups(data, l):
@@ -26,10 +21,9 @@ def Groups(data, l):
 
 def UploadAndExecute(data):
     cmds = []
-    cmds.append(WrapCommand(0x11, bytes({0x00, 0x00})))
-    for g in Groups(data, 8):
-        cmds.append(WrapCommand(0x12,g))
-    cmds.append(WrapCommand(0x10, bytes(0)))
+    for g in Groups(data, 16):
+        cmds.append(WrapCommand(0x1,g))
+    cmds.append(WrapCommand(0x3, bytes(0)))
     return cmds
 
 def Main(args):
@@ -56,7 +50,7 @@ def Main(args):
     for cmd in cmds:
         fout.write(cmd)
         serial.write(cmd)
-        resp = serial.read(12)
+        resp = serial.read(len(cmd))
         if len(resp) > 0:
             if resp == cmd:
                 nCmdsGood += 1

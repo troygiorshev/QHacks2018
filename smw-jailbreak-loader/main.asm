@@ -13,9 +13,19 @@ output "smw.srm"
 
 constant MEM_TMPBYTE($00)
 constant MEM_SUMBYTE($01)
-constant MEM_DESTPTR($02)
+constant MEM_DESTOFF($02)
 constant MEM_LOOP($0f)
 constant NUM_BYTES(12)
+
+seek($ffff41)
+patchB:
+    jml $7e2000
+
+seek($ffff46)
+patchA:
+    jsr delayLoop
+    ldx.b #$00
+    bra patchAA
 
 seek($ffff50)
     rtl
@@ -30,7 +40,10 @@ getData:
 -
     lda.b #$01
     sta.w REG_JOYA
-    ldx.b #$00 // this has to go in between to take up time
+    //ldx.b #$00 // this has to go in between to take up time
+    // a2 00
+    bra patchA
+patchAA:
     stz.w REG_JOYA
     stz.b MEM_SUMBYTE
 -
@@ -70,16 +83,19 @@ afterLoadByte:
     lda.b $13 // overwritten with bra invalidPacket
 
     cmp.b #$10
-    bne +
-    jmp [MEM_DESTPTR]
-    +
+    //bne +
+    //jmp [MEM_DESTOFF]
+    beq patchB
+    nop
+    nop
+    //+
 
     cmp.b #$11
     bne +
-    ldx.b #$02
+    ldx.b #$01
     -
     lda.b $14,x
-    sta.b MEM_DESTPTR,x
+    sta.b MEM_DESTOFF,x
     dex
     bpl -
     bra getData
@@ -87,18 +103,35 @@ afterLoadByte:
 
     cmp.b #$12
     bne getData
-    ldx.b #$00
+    ldy.b #$00
+    rep #$10
+    // y is now $0000
+    ldx.b MEM_DESTOFF
     -
-    lda.b $14,x
-    sta [MEM_DESTPTR]
-    inc.b MEM_DESTPTR
-    bne +
-    inc.b (MEM_DESTPTR+1)
-    +
+    phx
+    tyx
+    jmp patchC
+patchCA:
     inx
-    cpx.b #$08
     bne -
+    stx.b MEM_DESTOFF
+    sep #$30
     bra getData
+    
+    //cmp.b #$12
+    //bne getData
+    //ldx.b #$00
+    //-
+    //lda.b $14,x
+    //sta [MEM_DESTOFF]
+    //inc.b MEM_DESTOFF
+    //bne +
+    //inc.b (MEM_DESTOFF+1)
+    //+
+    //inx
+    //cpx.b #$08
+    //bne -
+    //bra getData
 
  // latch is 12 us
 invalidPacket:
@@ -128,12 +161,18 @@ waitForNMI:
 
 delayLoop:
     xba
-    lda #$10
+    lda #$08
     -
     dec
     bne -
     xba
     rts
+
+patchC:
+    lda.b $14,x
+    plx
+    sta.l $7e2000,x
+    bra patchCA
 
 print origin()
 print "\n"

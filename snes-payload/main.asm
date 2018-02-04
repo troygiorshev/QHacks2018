@@ -10,8 +10,11 @@ output "snes-payload.bin", create
 include "../asm-common/defs.asm"
 
 seek($2000)
-    SNES_INIT(SLOWROM)
+    //SNES_INIT(SLOWROM)
     sep #$30
+    lda.b #$00
+    pha
+    plb
     stz.w REG_CGWSEL
     stz.w REG_TM
     lda.b #%11111111

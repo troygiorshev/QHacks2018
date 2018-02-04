@@ -26,10 +26,11 @@ def Groups(data, l):
 
 def UploadAndExecute(data):
     cmds = []
-    cmds.append(WrapCommand(0x11, bytes({0x00, 0x00})))
+    cmds.append(WrapCommand(0x11, bytes({0x00, 0xfd, 0xff})))
     for g in Groups(data, 8):
         cmds.append(WrapCommand(0x12,g))
-    cmds.append(WrapCommand(0x10, bytes(0)))
+    #cmds.append(WrapCommand(0x11, bytes({0x00, 0x80, 0x00})))
+    #cmds.append(WrapCommand(0x10, bytes(0)))
     return cmds
 
 def Main(args):
