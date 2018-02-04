@@ -12,4 +12,4 @@ pip3 install pyserial
 And lastly:
 Run controllerScript as such:
 
-node controllerScript <COM-Port>
+node controllerScript.js COM-Port
