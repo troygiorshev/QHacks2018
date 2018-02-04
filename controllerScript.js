@@ -30,6 +30,7 @@ state.yOff = 0; state.pOff = 0
 state.mode = 1
 state.wasVolPlusDown
 let volPlusWaiting, volMinusWaiting
+lastTime = 0;
 
 noble.on('discover', function(peripheral) {
     //console.log(peripheral.advertisement.localName);
@@ -136,15 +137,17 @@ function handleData(dataOLD) {
     //Woot, we have Pitch and Yaw!
     //Sort of.  The Yaw works perfectly, ranging between -3.14 to +3.14, with 0 being forward.  The Pitch is interesting.  It ranges from 1.57 to -1.57, with 0 being flat, and 1.57 being directly upwards.  Then, once you continue a "backflip", the values decrease from 1.57 back down to zero.  But, whatever, that's good enough!
 
+    currentTime = Date.Now()
+
     //Time to correct the values for forward.
 
     //Get wrong orientations
     if(state.isVolPlusDown && !state.wasVolPlusDown){
-        downTime = Date.now()
+        downTime = currentTime
         state.wasVolPlusDown = true
         state.pOff = state.Pitch;
     }else if(!state.isVolPlusDown && state.wasVolPlusDown){
-        if(Date.now() > downTime + 500){
+        if(currentTime > downTime + 500){
             state.mode = state.mode == 1 ? 2 : 1
         }
     }
@@ -153,15 +156,18 @@ function handleData(dataOLD) {
     //Correct Orientation
     state.Pitch = state.Pitch - state.pOff
 
-    pyshell.send('START')
-    pyshell.send(state.mode)
-    pyshell.send(state.Pitch)
-    pyshell.send(state.isHomeDown)
-    pyshell.send(state.isAppDown)
-    pyshell.send(state.isClickDown)
-    pyshell.send(state.isVolMinusDown)
-    pyshell.send(state.xTouch)
-    pyshell.send(state.yTouch)
+    if(currentTime - lastTime > 20){
+        pyshell.send('START')
+        pyshell.send(state.mode)
+        pyshell.send(state.Pitch)
+        pyshell.send(state.isHomeDown)
+        pyshell.send(state.isAppDown)
+        pyshell.send(state.isClickDown)
+        pyshell.send(state.isVolMinusDown)
+        pyshell.send(state.xTouch)
+        pyshell.send(state.yTouch)
+        lastTime = currentTime
+    }
 }
 
 function toArrayBuffer(buf) {
