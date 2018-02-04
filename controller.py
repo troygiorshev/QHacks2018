@@ -1,7 +1,6 @@
 import sys
 import serial
 import math
-import time
 serial = serial.Serial()
 serial.close()
 
@@ -19,8 +18,6 @@ def Main(args):
         serial.baudrate = 115200
         serial.timeout = 10
         serial.open()
-
-        pastTime = time.time()
 
         while True:
             buff = input()
@@ -119,20 +116,18 @@ def Main(args):
                             up = 1
             buff = ''
 
-            if (time.time() - pastTime) > 0.005:
-                pastTime = time.time()
-                controllerData = str(b)+str(y)+str(select)+str(start)+str(up)+str(down)+str(left)+str(right)+str(a)+str(x)+str(lb)+str(rb)+'0000'
-                contDataBytes = bitstring_to_bytes(controllerData)
-                print(contDataBytes)
+            controllerData = str(b)+str(y)+str(select)+str(start)+str(up)+str(down)+str(left)+str(right)+str(a)+str(x)+str(lb)+str(rb)+'0000'
+            contDataBytes = bitstring_to_bytes(controllerData)
+            print(contDataBytes)
 
-                serial.reset_output_buffer()
-                serial.write(contDataBytes)
+            serial.reset_output_buffer()
+            serial.write(contDataBytes)
 
-                echo = serial.read(len(contDataBytes))
-                if len(echo) != len(contDataBytes):
-                    print("BAD!")
+            echo = serial.read(len(contDataBytes))
+            if len(echo) != len(contDataBytes):
+                print("BAD!")
 
-                #print(controllerData)
+            #print(controllerData)
     except KeyboardInterrupt:
         sys.stdout.flush()
         serial.close()

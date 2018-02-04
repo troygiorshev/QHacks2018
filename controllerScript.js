@@ -137,7 +137,7 @@ function handleData(dataOLD) {
     //Woot, we have Pitch and Yaw!
     //Sort of.  The Yaw works perfectly, ranging between -3.14 to +3.14, with 0 being forward.  The Pitch is interesting.  It ranges from 1.57 to -1.57, with 0 being flat, and 1.57 being directly upwards.  Then, once you continue a "backflip", the values decrease from 1.57 back down to zero.  But, whatever, that's good enough!
 
-    currentTime = Date.Now()
+    currentTime = Date.now()
 
     //Time to correct the values for forward.
 
