@@ -5,8 +5,8 @@ var PythonShell = require('python-shell')
 //First and foremost, start up the python script
 var options = {
     mode: 'text',
-    pythonPath: 'python3'
-    args: process.argv
+    pythonPath: 'python3',
+    args: process.argv[2]
 }
 var pyshell = new PythonShell('controller.py',options);
 
