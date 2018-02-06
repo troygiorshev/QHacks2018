@@ -136,7 +136,6 @@ void setup() {
 void loop() {
   // -------------------- READ DATA--------------------
   
-  //while(Serial.available() < 12) {} // wait for buffer to be full
   byte dataIn = Serial.readBytes((uint8_t *)dataPacketBuffer, DATA_PACKET_SIZE_BYTES);
 
   // -------------------- CHECK DATA--------------------

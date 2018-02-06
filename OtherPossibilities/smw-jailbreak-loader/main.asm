@@ -92,7 +92,7 @@ afterLoadByte:
 
     cmp.b #$11
     bne +
-    ldx.b #$01
+    ldx.b #$02
     -
     lda.b $14,x
     sta.b MEM_DESTOFF,x
@@ -100,38 +100,21 @@ afterLoadByte:
     bpl -
     bra getData
     +
-
+    
     cmp.b #$12
     bne getData
-    ldy.b #$00
-    rep #$10
-    // y is now $0000
-    ldx.b MEM_DESTOFF
+    ldx.b #$00
     -
-    phx
-    tyx
-    jmp patchC
-patchCA:
+    lda.b $14,x
+    sta [MEM_DESTOFF]
+    inc.b MEM_DESTOFF
+    bne +
+    inc.b (MEM_DESTOFF+1)
+    +
     inx
+    cpx.b #$08
     bne -
-    stx.b MEM_DESTOFF
-    sep #$30
     bra getData
-    
-    //cmp.b #$12
-    //bne getData
-    //ldx.b #$00
-    //-
-    //lda.b $14,x
-    //sta [MEM_DESTOFF]
-    //inc.b MEM_DESTOFF
-    //bne +
-    //inc.b (MEM_DESTOFF+1)
-    //+
-    //inx
-    //cpx.b #$08
-    //bne -
-    //bra getData
 
  // latch is 12 us
 invalidPacket:

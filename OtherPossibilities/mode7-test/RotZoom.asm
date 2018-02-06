@@ -156,6 +156,13 @@ SetPixel:
   ora.b $06
   sta.b $06
 
+  stz.b $03
+  stz.b $05
+  stz.b $07
+  rep #$20
+  lda.b $02
+  
+
 
 // Character Data
 // BANK 0
